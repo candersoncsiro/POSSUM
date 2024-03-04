@@ -15,7 +15,7 @@ from astropy.table import Table, Column
 docstring = """
 This script processes sky coordinates provided by the user, matches them against completed POSSUM (Polarization Sky Survey of the Universe's Magnetism) survey observations, and identifies beams numbers and SBIDS that correspond to these positions. It utilizes publicly available data from Google Sheets for survey progress and beam positions, performing cross-matching to return the nearest POSSUM observations to the input coordinates.
 
-Input: A list of coords. One per line. Can be in sexagesimal or decimal format. Can be command separated or space separated. 
+Input: A list of coords. One per line. Can be in sexagesimal or decimal format. Use space separation for the RA/Dec coords. 
 Output: Currently results are just printed to terminal. 
 
 Features:
