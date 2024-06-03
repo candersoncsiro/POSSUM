@@ -263,10 +263,11 @@ def main(file_path):
 	candidate_coords = load_and_parse_coordinates(file_path)
 
 	"""
-	Pull in POSSUM survey progress for band 1, which is a publicly available and regularly updated version of Cameron's survey tracking sheet
+	Pull in POSSUM survey progress for band 1, which is Cameron's publicly available and regularly updated survey tracking sheet
+    
 	"""
 	# Load survey progress from online resources 
-	POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdbCKI4BeA66fSWbiezMKlIFDkMqmscUQyLBbJkqRoNpYyTWmcgoV0cNWEy8mybY2KhNP6of8EQJG/pub?gid=711072015&single=true&output=csv"
+	POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/1sWCtxSSzTwjYjhxr1_KVLWG2AnrHwSJf_RWQow7wbH0/gviz/tq?tqx=out:csv&sheet=Survey%20Observations%20-%20Band%201"
 	filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url)
 
 	"""
