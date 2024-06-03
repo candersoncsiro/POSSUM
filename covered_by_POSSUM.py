@@ -87,6 +87,9 @@ def load_and_parse_coordinates(file_path):
 		elif re.match(r'^[0-9.+\- ,]+$', coord):
 			ra, dec = map(float, coord.replace(',',' ').split())
 			candidate = SkyCoord(ra=ra, dec=dec, unit='deg', frame='icrs')
+		elif coord == 'RA DEC' or len(coord) == 0:
+			# Suppress error message for obvious cases
+			continue
 		else:
 			print(f"Could not recognize coordinates in the following string from user input: \'{coord}\'")
 			continue
