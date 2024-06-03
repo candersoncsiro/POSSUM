@@ -255,11 +255,15 @@ def perform_cross_matching(candidate_coords, observed_positions, separation_thre
 
 ### MAIN
 
-def main(file_path):
-
+def main(args):
+	"""
+	Unpack input arguments
+	"""
+	file_path = args.file_path
+	
 	"""
 	Load in the sky coords we want to match against (i.e. those supplied by user).
-	"""    
+	"""
 	candidate_coords = load_and_parse_coordinates(file_path)
 
 	"""
@@ -313,6 +317,7 @@ def main(file_path):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=docstring, formatter_class=argparse.RawDescriptionHelpFormatter)
 	parser.add_argument('file_path', type=str, help='Path to the text file containing coordinates in each row.')
+	parser.add_argument('-b', '--band', type=str, help='Frequency band to query (1 or 2)')
 
 	args = parser.parse_args()
-	main(args.file_path)
+	main(args)
