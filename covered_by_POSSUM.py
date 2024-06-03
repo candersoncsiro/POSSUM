@@ -96,7 +96,7 @@ def load_and_parse_coordinates(file_path):
 
 		candidate_coords.append(candidate)
 
-	print(f'\nMatching against {len(candidate_coords)} successfully read-in coordinates...\n')
+	print(f'Matching against {len(candidate_coords)} successfully read-in coordinates...')
 	return candidate_coords
 
 def fetch_published_sheet_data(csv_url):
@@ -192,7 +192,7 @@ def load_possum_beam_positions(csv_url):
 			# Add the SkyCoord object as a new column to the table
 			beam_positions_table['skycoords'] = skycoords
 
-			print('INFO: Beam positions loaded successfully.')
+			print('INFO: Beam positions loaded successfully.\n\n')
 			return beam_positions_table
 
 		except Exception as e:
@@ -223,7 +223,7 @@ def perform_cross_matching(candidate_coords, observed_positions, separation_thre
 		ra_str = candidate.ra.to_string(unit='hourangle', sep='', precision=0, pad=True)
 		dec_str = candidate.dec.to_string(sep='', precision=0, alwayssign=True, pad=True)
 		candidate_name = f"Candidate {index} at location J{ra_str}{dec_str}"
-		print(f'INFO: Checking {candidate_name}...\n')
+		print(f'INFO: Checking {candidate_name}...')
 
 		# Calculate the on-sky separations
 		separations = candidate.separation(observed_positions['skycoords'])
@@ -272,7 +272,7 @@ def main(args):
 			raise Exception('Invalid frequency band chosen. Only \'1\' or \'2\' are supported.')
 	else:
 		band_used = '1'
-	print('Band being used: '+band_used)
+	print('\nBand being used: '+band_used)
     
 	"""
 	Load in the sky coords we want to match against (i.e. those supplied by user).
