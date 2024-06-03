@@ -260,7 +260,14 @@ def main(args):
 	Unpack input arguments
 	"""
 	file_path = args.file_path
-	
+	if args.band:
+		band_used = args.band
+		if band_used not in ['1', '2']:
+			raise Exception('Invalid frequency band chosen. Only \'1\' or \'2\' are supported.')
+	else:
+		band_used = '1'
+	print('Band being used: '+band_used)
+    
 	"""
 	Load in the sky coords we want to match against (i.e. those supplied by user).
 	"""
