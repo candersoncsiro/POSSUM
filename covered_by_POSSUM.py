@@ -286,12 +286,24 @@ def main(args):
 	# Load survey progress from online resources
 	if band_used == '1':
 		POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/1sWCtxSSzTwjYjhxr1_KVLWG2AnrHwSJf_RWQow7wbH0/gviz/tq?tqx=out:csv&sheet=Survey%20Observations%20-%20Band%201"
+		POSSUM_progress_csv_url_alt = "https://www.mso.anu.edu.au/~ykma/possum_csv/band1.csv"
 		POSSUM_beams_csv = "full_survey_band1_beam_center.csv"
+		filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
+		if filtered_survey_progress_table == None:
+			# Unable to get Google sheet, use ANU version instead
+			print("Using ANU CSV instead of Google sheet...")
+			filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url_alt, band_used)
+		POSSUM_survey_all_beam_locs = load_possum_beam_positions(POSSUM_beams_csv)
 	elif band_used == '2':
 		POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/1sWCtxSSzTwjYjhxr1_KVLWG2AnrHwSJf_RWQow7wbH0/gviz/tq?tqx=out:csv&sheet=Survey%20Observations%20-%20Band%202"
+		POSSUM_progress_csv_url_alt = "https://www.mso.anu.edu.au/~ykma/possum_csv/band2.csv"
 		POSSUM_beams_csv = "full_survey_band2_beam_center.csv"
-	filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
-	POSSUM_survey_all_beam_locs = load_possum_beam_positions(POSSUM_beams_csv)
+		filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
+		if filtered_survey_progress_table == None:
+			# Unable to get Google sheet, use ANU version instead
+			print("Using ANU CSV instead of Google sheet...")
+			filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url_alt, band_used)
+		POSSUM_survey_all_beam_locs = load_possum_beam_positions(POSSUM_beams_csv)
 
 	"""
 	The naming conventions for tiles / SBIDs etc differ in different resources. So some jiggery-pokery is needed. 
