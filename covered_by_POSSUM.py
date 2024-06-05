@@ -289,7 +289,7 @@ def main(args):
 		POSSUM_progress_csv_url_alt = "https://www.mso.anu.edu.au/~ykma/possum_csv/band1.csv"
 		POSSUM_beams_csv = "full_survey_band1_beam_center.csv"
 		filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
-		if filtered_survey_progress_table == None:
+		if filtered_survey_progress_table is None:
 			# Unable to get Google sheet, use ANU version instead
 			print("Using ANU CSV instead of Google sheet...")
 			filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url_alt, band_used)
@@ -299,7 +299,7 @@ def main(args):
 		POSSUM_progress_csv_url_alt = "https://www.mso.anu.edu.au/~ykma/possum_csv/band2.csv"
 		POSSUM_beams_csv = "full_survey_band2_beam_center.csv"
 		filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
-		if filtered_survey_progress_table == None:
+		if filtered_survey_progress_table is None:
 			# Unable to get Google sheet, use ANU version instead
 			print("Using ANU CSV instead of Google sheet...")
 			filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url_alt, band_used)
