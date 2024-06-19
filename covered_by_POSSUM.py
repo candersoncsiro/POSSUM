@@ -87,13 +87,16 @@ def load_and_parse_coordinates(file_path):
 		elif re.match(r'^[0-9.+\- ,]+$', coord):
 			ra, dec = map(float, coord.replace(',',' ').split())
 			candidate = SkyCoord(ra=ra, dec=dec, unit='deg', frame='icrs')
+		elif coord == 'RA DEC' or len(coord) == 0:
+			# Suppress error message for obvious cases
+			continue
 		else:
 			print(f"Could not recognize coordinates in the following string from user input: \'{coord}\'")
 			continue
 
 		candidate_coords.append(candidate)
 
-	print(f'\nMatching against {len(candidate_coords)} successfully read-in coordinates...\n')
+	print(f'Matching against {len(candidate_coords)} successfully read-in coordinates...')
 	return candidate_coords
 
 def fetch_published_sheet_data(csv_url):
@@ -113,7 +116,7 @@ def fetch_published_sheet_data(csv_url):
 		print(f"Failed to fetch or parse the CSV data: {e}")
 		return None
 
-def load_and_process_survey_progress(csv_url):
+def load_and_process_survey_progress(csv_url, band):
 	"""
 	Fetches and processes the survey progress data from a CSV URL.
 
@@ -140,7 +143,10 @@ def load_and_process_survey_progress(csv_url):
 		survey_progress_table['skycoords'] = skycoords_sexagesimal
 
 		# Format Cameron's field names to match Lerato's
-		new_column_data = [name.split("EMU_")[1] if "EMU_" in name else name for name in survey_progress_table['name']]
+		if band == '1':
+			new_column_data = [name.split("EMU_")[1] if "EMU_" in name else name for name in survey_progress_table['name']]
+		elif band == '2':
+			new_column_data = [name.split("WALLABY_")[1] if "WALLABY_" in name else name for name in survey_progress_table['name']]
 		new_column = Column(data=new_column_data, name='Lerato_field_names')
 		survey_progress_table.add_column(new_column)
 
@@ -157,7 +163,7 @@ def load_and_process_survey_progress(csv_url):
 		print("Failed to load data from the published sheet.")
 		return None
 
-def load_possum_band1_beam_positions(csv_url):
+def load_possum_beam_positions(csv_url):
 	"""
 	Loads beam positions from a publicly accessible Google Sheet CSV URL, converts it to an Astropy Table,
 	and enriches it with SkyCoord objects for each beam's RA and Dec.
@@ -186,7 +192,7 @@ def load_possum_band1_beam_positions(csv_url):
 			# Add the SkyCoord object as a new column to the table
 			beam_positions_table['skycoords'] = skycoords
 
-			print('INFO: Beam positions loaded successfully.')
+			print('INFO: Beam positions loaded successfully.\n\n')
 			return beam_positions_table
 
 		except Exception as e:
@@ -217,7 +223,7 @@ def perform_cross_matching(candidate_coords, observed_positions, separation_thre
 		ra_str = candidate.ra.to_string(unit='hourangle', sep='', precision=0, pad=True)
 		dec_str = candidate.dec.to_string(sep='', precision=0, alwayssign=True, pad=True)
 		candidate_name = f"Candidate {index} at location J{ra_str}{dec_str}"
-		print(f'INFO: Checking {candidate_name}...\n')
+		print(f'INFO: Checking {candidate_name}...')
 
 		# Calculate the on-sky separations
 		separations = candidate.separation(observed_positions['skycoords'])
@@ -255,26 +261,49 @@ def perform_cross_matching(candidate_coords, observed_positions, separation_thre
 
 ### MAIN
 
-def main(file_path):
-
+def main(args):
+	"""
+	Unpack input arguments
+	"""
+	file_path = args.file_path
+	if args.band:
+		band_used = args.band
+		if band_used not in ['1', '2']:
+			raise Exception('Invalid frequency band chosen. Only \'1\' or \'2\' are supported.')
+	else:
+		band_used = '1'
+	print('\nBand being used: '+band_used)
+    
 	"""
 	Load in the sky coords we want to match against (i.e. those supplied by user).
-	"""    
+	"""
 	candidate_coords = load_and_parse_coordinates(file_path)
 
 	"""
-	Pull in POSSUM survey progress for band 1, which is a publicly available and regularly updated version of Cameron's survey tracking sheet
+	Pull in POSSUM survey progress, which is Cameron's publicly available and regularly updated survey tracking sheet
+    Also pull in Lerato's positions for all beams in the survey'
 	"""
-	# Load survey progress from online resources 
-	POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdbCKI4BeA66fSWbiezMKlIFDkMqmscUQyLBbJkqRoNpYyTWmcgoV0cNWEy8mybY2KhNP6of8EQJG/pub?gid=711072015&single=true&output=csv"
-	filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url)
-
-	"""
-	Pull in Lerato's positions for all beams in the survey (band 1)
-	"""
-	# Load beam positions for band 1 survey from online resources 
-	POSSUM_band1_beams_csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS3RSYoKuPaXeKszfbmQkN5f-_mXSBcQaIDRT-7TmtzZ2mB_2iLP9ON-VCVQnnuX-hJfZ0CHstcKb79/pub?output=csv"
-	POSSUM_survey_B1_all_beam_locs = load_possum_band1_beam_positions(POSSUM_band1_beams_csv_url)
+	# Load survey progress from online resources
+	if band_used == '1':
+		POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/1sWCtxSSzTwjYjhxr1_KVLWG2AnrHwSJf_RWQow7wbH0/gviz/tq?tqx=out:csv&sheet=Survey%20Observations%20-%20Band%201"
+		POSSUM_progress_csv_url_alt = "https://www.mso.anu.edu.au/~ykma/possum_csv/band1.csv"
+		POSSUM_beams_csv = "full_survey_band1_beam_center.csv"
+		filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
+		if filtered_survey_progress_table is None:
+			# Unable to get Google sheet, use ANU version instead
+			print("Using ANU CSV instead of Google sheet...")
+			filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url_alt, band_used)
+		POSSUM_survey_all_beam_locs = load_possum_beam_positions(POSSUM_beams_csv)
+	elif band_used == '2':
+		POSSUM_progress_csv_url = "https://docs.google.com/spreadsheets/d/1sWCtxSSzTwjYjhxr1_KVLWG2AnrHwSJf_RWQow7wbH0/gviz/tq?tqx=out:csv&sheet=Survey%20Observations%20-%20Band%202"
+		POSSUM_progress_csv_url_alt = "https://www.mso.anu.edu.au/~ykma/possum_csv/band2.csv"
+		POSSUM_beams_csv = "full_survey_band2_beam_center.csv"
+		filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url, band_used)
+		if filtered_survey_progress_table is None:
+			# Unable to get Google sheet, use ANU version instead
+			print("Using ANU CSV instead of Google sheet...")
+			filtered_survey_progress_table = load_and_process_survey_progress(POSSUM_progress_csv_url_alt, band_used)
+		POSSUM_survey_all_beam_locs = load_possum_beam_positions(POSSUM_beams_csv)
 
 	"""
 	The naming conventions for tiles / SBIDs etc differ in different resources. So some jiggery-pokery is needed. 
@@ -285,10 +314,10 @@ def main(file_path):
 	lerato_field_names = set(filtered_survey_progress_table['Lerato_field_names'])
 
 	# Create a mask where each value in the 'SB' column is checked if it' is in 'lerato_field_names'
-	mask = [value in lerato_field_names for value in POSSUM_survey_B1_all_beam_locs['SB']]
+	mask = [value in lerato_field_names for value in POSSUM_survey_all_beam_locs['SB']]
 
-	# Apply the mask to the POSSUM_survey_B1_all_beam_locs
-	observed_POSSUM_survey_B1_all_beam_locs = POSSUM_survey_B1_all_beam_locs[mask]
+	# Apply the mask to the POSSUM_survey_all_beam_locs
+	observed_POSSUM_survey_all_beam_locs = POSSUM_survey_all_beam_locs[mask]
 
 	"""
 	Map the actual SBIDs back from Cameron's table into Lerato's table
@@ -297,21 +326,22 @@ def main(file_path):
 	# Create a dictionary that maps Lerato_field_names to SBIDs from actual observations
 	lerato_to_sbid_mapping = {lerato_field_name: sbid for lerato_field_name, sbid in zip(filtered_survey_progress_table['Lerato_field_names'], filtered_survey_progress_table['sbid'])}
 
-	# Use a list comprehension to create a new list of SBID values that correspond to the SB values in observed_POSSUM_survey_B1_all_beam_locs
-	sbid_values = [lerato_to_sbid_mapping.get(sb_value, 'N/A') for sb_value in observed_POSSUM_survey_B1_all_beam_locs['SB']]
+	# Use a list comprehension to create a new list of SBID values that correspond to the SB values in observed_POSSUM_survey_all_beam_locs
+	sbid_values = [lerato_to_sbid_mapping.get(sb_value, 'N/A') for sb_value in observed_POSSUM_survey_all_beam_locs['SB']]
 
-	# Create a new column with these values and add it to observed_POSSUM_survey_B1_all_beam_locs
-	observed_POSSUM_survey_B1_all_beam_locs['SBID'] = sbid_values
+	# Create a new column with these values and add it to observed_POSSUM_survey_all_beam_locs
+	observed_POSSUM_survey_all_beam_locs['SBID'] = sbid_values
 
 	"""
 	X-match candidate coords against beam and SBID. Return nearest 3 matches.
 	"""
-	observed_candidates = perform_cross_matching(candidate_coords, observed_POSSUM_survey_B1_all_beam_locs)
+	observed_candidates = perform_cross_matching(candidate_coords, observed_POSSUM_survey_all_beam_locs)
 
 ## Main
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=docstring, formatter_class=argparse.RawDescriptionHelpFormatter)
 	parser.add_argument('file_path', type=str, help='Path to the text file containing coordinates in each row.')
+	parser.add_argument('-b', '--band', type=str, help='Frequency band to query (1 or 2)')
 
 	args = parser.parse_args()
-	main(args.file_path)
+	main(args)
