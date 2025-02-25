@@ -215,7 +215,7 @@ def load_possum_beam_positions(csv_url):
 	else:
 		raise ValueError('No data available for beam positions, or the beam data was not read in successfully from online resources. The script cannot proceed.')
 
-def perform_cross_matching(candidate_coords, name_list, observed_positions, separation_threshold=1.6):
+def perform_cross_matching(candidate_coords, observed_positions, name_list, separation_threshold=1.6):
 	"""
 	Perform cross-matching between candidate coordinates and observed POSSUM survey positions.
 
@@ -351,7 +351,7 @@ def main(args):
 	"""
 	X-match candidate coords against beam and SBID. Return nearest 3 matches.
 	"""
-	observed_candidates = perform_cross_matching(candidate_coords, name_list, observed_POSSUM_survey_all_beam_locs)
+	observed_candidates = perform_cross_matching(candidate_coords, observed_POSSUM_survey_all_beam_locs, name_list)
 
 ## Main
 if __name__ == "__main__":
