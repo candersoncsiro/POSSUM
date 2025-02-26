@@ -76,16 +76,28 @@ def load_and_parse_coordinates(file_path):
 	- list: A list of SkyCoord objects representing the parsed coordinates.
 	"""
 	ra_dec = read_coordinates(file_path)
-	candidate_coords = []
+	candidate_coords = []; name_list = []
 
 	for coord in ra_dec:
 		# Check if the input is in sexagesimal format by looking for colons
 		if ':' in coord:
-			ra, dec = coord.split(' ')
+			if len(coord.split(' ')) == 3:
+				# Length of 3: RA, Dec, Name
+				ra, dec, name = coord.split(' ')
+			else:
+				# Assumed length of 2: RA, Dec
+				[ra, dec], name = coord.split(' '), None
 			candidate = SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg), frame='icrs')
 		# Check if the input is in decimal degree format
-		elif re.match(r'^[0-9.+\- ,]+$', coord):
-			ra, dec = map(float, coord.replace(',',' ').split())
+		elif re.match(r'^[0-9.+\- ,]+$', coord.split(' ')[0]) and re.match(r'^[0-9.+\- ,]+$', coord.split(' ')[1]):
+			if len(coord.split(' ')) == 3:
+				# Length of 3: RA, Dec, Name
+				ra, dec = map(float, coord.replace(',',' ').split()[0:2])
+				name = coord.replace(',',' ').split()[2]
+			else:
+				# Assumed length of 2: RA, Dec
+				ra, dec = map(float, coord.replace(',',' ').split())
+				name = None
 			candidate = SkyCoord(ra=ra, dec=dec, unit='deg', frame='icrs')
 		elif coord == 'RA DEC' or len(coord) == 0:
 			# Suppress error message for obvious cases
@@ -95,9 +107,10 @@ def load_and_parse_coordinates(file_path):
 			continue
 
 		candidate_coords.append(candidate)
+		name_list.append(name)
 
 	print(f'Matching against {len(candidate_coords)} successfully read-in coordinates...')
-	return candidate_coords
+	return candidate_coords, name_list
 
 def fetch_published_sheet_data(csv_url):
 	"""
@@ -202,7 +215,7 @@ def load_possum_beam_positions(csv_url):
 	else:
 		raise ValueError('No data available for beam positions, or the beam data was not read in successfully from online resources. The script cannot proceed.')
 
-def perform_cross_matching(candidate_coords, observed_positions, separation_threshold=1.6):
+def perform_cross_matching(candidate_coords, observed_positions, name_list, separation_threshold=1.6):
 	"""
 	Perform cross-matching between candidate coordinates and observed POSSUM survey positions.
 
@@ -219,10 +232,13 @@ def perform_cross_matching(candidate_coords, observed_positions, separation_thre
 	# Iterate over the candidate coordinates
 	for index, candidate in enumerate(candidate_coords):
 		output_string = ""
+		name = name_list[index]
 		# Convert coordinates to string format for display
 		ra_str = candidate.ra.to_string(unit='hourangle', sep='', precision=0, pad=True)
 		dec_str = candidate.dec.to_string(sep='', precision=0, alwayssign=True, pad=True)
-		candidate_name = f"Candidate {index} at location J{ra_str}{dec_str}"
+		if name == None:
+			name = f'J{ra_str}{dec_str}'
+		candidate_name = f"Candidate {index} at location {name}"
 		print(f'INFO: Checking {candidate_name}...')
 
 		# Calculate the on-sky separations
@@ -277,7 +293,7 @@ def main(args):
 	"""
 	Load in the sky coords we want to match against (i.e. those supplied by user).
 	"""
-	candidate_coords = load_and_parse_coordinates(file_path)
+	candidate_coords, name_list = load_and_parse_coordinates(file_path)
 
 	"""
 	Pull in POSSUM survey progress, which is Cameron's publicly available and regularly updated survey tracking sheet
@@ -335,7 +351,7 @@ def main(args):
 	"""
 	X-match candidate coords against beam and SBID. Return nearest 3 matches.
 	"""
-	observed_candidates = perform_cross_matching(candidate_coords, observed_POSSUM_survey_all_beam_locs)
+	observed_candidates = perform_cross_matching(candidate_coords, observed_POSSUM_survey_all_beam_locs, name_list)
 
 ## Main
 if __name__ == "__main__":
