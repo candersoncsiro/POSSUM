@@ -50,6 +50,7 @@ def rotate_rm_cube(input_fits, rotation_angle, output_fits):
         data = hdul[0].data  # Extract 3D data array (RA, Dec, RM)
         header = hdul[0].header  # Extract FITS header
         wcs = WCS(header)  # Extract WCS object
+        wcs = WCS(header, naxis=3) #Force 3D, because CASA + ASKAP adds the stoopid singleton axis, which makes the PC matrix 4x4.
 
     # === Step 2: Define the New Rotated WCS ===
     print("🛠️  Creating a rotated WCS...")
