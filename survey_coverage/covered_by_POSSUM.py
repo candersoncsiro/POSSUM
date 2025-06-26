@@ -89,7 +89,7 @@ def load_and_parse_coordinates(file_path):
 				[ra, dec], name = coord.split(' '), None
 			candidate = SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg), frame='icrs')
 		# Check if the input is in decimal degree format
-		elif re.match(r'^[0-9.+\- ,]+$', coord.split(' ')[0]) and re.match(r'^[0-9.+\- ,]+$', coord.split(' ')[1]):
+		elif re.match(r'^[0-9.+\- ,eE]+$', coord.split(' ')[0]) and re.match(r'^[0-9.+\- ,eE]+$', coord.split(' ')[1]):
 			if len(coord.split(' ')) == 3:
 				# Length of 3: RA, Dec, Name
 				ra, dec = map(float, coord.replace(',',' ').split()[0:2])
